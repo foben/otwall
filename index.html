@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Off the Wall</title>
+<style>
+canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background: transparent;
+}
+
+#background {
+  z-index: -10;
+  background-color: green;
+}
+#ball {
+  z-index: 10;
+}
+#player {
+  z-index: 0;
+}
+#arm {
+  z-index: 5;
+}
+#debug {
+  background-color:red;
+  top:400px;
+  position:absolute;
+  width:300px;
+  height:20px;
+  padding: 2px;
+}
+</style>
+</head>
+<body>
+<!-- The canvas for the panning background -->
+<canvas id="background" width="800" height="360">
+  Your browser does not support canvas. Please try again with a different browser.
+</canvas>
+
+<canvas id="ball" width="800" height="360">
+</canvas>
+
+<canvas id="player" width="800" height="360">
+</canvas>
+
+<canvas id="arm" width="800" height="360">
+</canvas>
+
+<br/>
+<div id="debug"></div>
+<script src="otwall.js"></script>
+</body>
+</html>
