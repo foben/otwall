@@ -1,9 +1,7 @@
 var imageRepository  = new function() {
-  this.background = new Image();
   this.player = new Image();
-  this.ball = new Image();
   this.arm = new Image();
-  var numImages = 4;
+  var numImages = 2;
   var numLoaded = 0;
   function imageLoaded() {
     numLoaded++;
@@ -11,13 +9,7 @@ var imageRepository  = new function() {
       window.init();
     }
   }
-  this.background.onload = function() {
-    imageLoaded();
-  }
   this.player.onload = function() {
-    imageLoaded();
-  }
-  this.ball.onload = function() {
     imageLoaded();
   }
   this.arm.onload = function() {
@@ -203,8 +195,7 @@ function Game() {
       Player.prototype.armCanvasHeight = this.armCanvas.height;
 
       this.ball = new Ball();
-      this.ball.init(30, 100, imageRepository.ball.width,
-          imageRepository.ball.height);
+      this.ball.init(30, 100, 7, 7);
       this.player = new Player();
       this.player.init(50, this.playerCanvas.height - imageRepository.player.height, imageRepository.player.width,
           imageRepository.player.height);
