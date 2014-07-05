@@ -3,11 +3,19 @@
 <head>
 <title>Off the Wall</title>
 <style>
+
 canvas {
   position: absolute;
   top: 0px;
   left: 0px;
   background: transparent;
+}
+
+#fpsdiv{
+  position:absolute;
+  top:0px;
+  left:800px;
+
 }
 
 #background {
@@ -47,9 +55,12 @@ canvas {
 
 <canvas id="arm" width="800" height="360">
 </canvas>
-
+<div id="fpsdiv"></div>
 <br/>
 <div id="debug"></div>
 <script src="otwall.js"></script>
+<script src="input.js"></script>
+<script src="vector2.js"></script>
+<script src="fpsmeter.min.js"></script>
 </body>
 </html>
