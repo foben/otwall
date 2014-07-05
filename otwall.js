@@ -31,7 +31,8 @@ function Drawable() {
   this.canvasWidth = 0;
   this.canvasHeight = 0;
 
-  this.draw = function() {};
+  this.render = function() {};
+  this.update = function() {};
 }
 
 function Ball() {
@@ -40,15 +41,22 @@ function Ball() {
   this.ya = -15;
   //this.direction = Math.PI/2.345; //rechts oben
   //this.speed = 13;
+  //
+  this.render = function() {
+    this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
 
-  this.draw = function() {
-    //document.getElementById("debug").textContent = this.direction;
-    this.context.clearRect(this.x - 3*this.radius, this.y - 3*this.radius,
-        5*this.radius, 5*this.radius);
+    this.context.beginPath();
+    this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+    this.context.fillStyle = 'yellow';
+    this.context.fill();
+    this.context.stroke();
+
+  }
+
+  this.update = function() {
     this.ya += 1;
     this.xa *= 0.99;
     this.ya *= 0.99;
-
 
     linestart = new Vector2(game.player.rstartx, game.player.rstarty);
     lineend = new Vector2(game.player.rendx, game.player.rendy);
@@ -57,8 +65,8 @@ function Ball() {
       ballpos = new Vector2(this.x + (this.xa / i), this.y + (this.ya/i));
       if (doesCollide(linestart, lineend, ballpos, this.radius)){
         var deflection = this.getNewAngle(new Vector2(this.xa, this.ya), lineend.subtr(linestart));
-        this.xa = deflection.x;
-        this.ya = deflection.y;
+        this.xa = deflection.x * game.player.rforce;
+        this.ya = deflection.y * game.player.rforce;
         //this.reset();
         break;
       }
@@ -75,11 +83,6 @@ function Ball() {
       //this.direction = this.getNewAngle(this.direction, 1, 0);
       this.ya *= -1;
     }
-    this.context.beginPath();
-    this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
-    this.context.fillStyle = 'yellow';
-    this.context.fill();
-    this.context.stroke();
 
   };
 
@@ -90,8 +93,6 @@ function Ball() {
     var dotpr = norm.dot(dir);
     var def = dir.subtr(norm2.multiply(dotpr));
 
-
-    
     return def;
   }
 
@@ -114,8 +115,10 @@ function Player() {
   this.rangle = 0;
   this.armcx = 0;
   this.armcy = 0;
+  this.rforce = 1;
 
-  this.draw = function() {
+  this.render = function() {
+    debug(this.rforce);
     this.context.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.context.drawImage(imageRepository.player, this.x, this.y);
     this.armcx = this.x + this.width/2;
@@ -142,9 +145,9 @@ function Player() {
     this.armContext.drawImage(imageRepository.arm, -5,-5 );
 
   };
-  this.move = function() {
-    if (KEY_STATUS.left || KEY_STATUS.right
-        || KEY_STATUS.rleft || KEY_STATUS.rright) {
+
+  this.update = function() {
+    if (KEY_STATUS.left || KEY_STATUS.right) {
       if (KEY_STATUS.left) {
         this.x -= this.speed;
         if (this.x <= 0) {
@@ -156,59 +159,112 @@ function Player() {
           this.x = this.canvasWidth - this.width;
         }
       }
-
+    }
+    if(KEY_STATUS.rleft || KEY_STATUS.rright) {
+      this.rforce = Math.min (this.rforce += 0.08, 3);
       if(KEY_STATUS.rright) {
         this.rangle += this.rspeed;
       } else if (KEY_STATUS.rleft) {
         this.rangle -= this.rspeed;
       }
+    } else {
+      this.rforce = 1;
     }
-    this.draw();
   };
 
 }
 Player.prototype = new Drawable();
 
-function Game() {
-  this.init = function() {
-    this.bgCanvas = document.getElementById('background');
-    this.ballCanvas = document.getElementById('ball');
-    this.playerCanvas = document.getElementById('player');
-    this.armCanvas = document.getElementById('arm');
-    if (this.bgCanvas.getContext) {
+var game  = {
+  fps: 60,
+  ball: null,
+  player: null,
+
+  bgCanvas: null,
+  ballCanvas: null,
+  playerCanvas: null,
+  armCanvas: null,
+
+  bgContext: null,
+  ballContext: null,
+  playerContext: null,
+  armContext: null,
+
+  update: function(dt) {
+    game.player.update();
+    game.ball.update();
+  },
+
+  render: function(){
+    game.player.render();
+    game.ball.render();
+  },
+
+  init: function() {
+    game.bgCanvas = document.getElementById('background');
+    game.ballCanvas = document.getElementById('ball');
+    game.playerCanvas = document.getElementById('player');
+    game.armCanvas = document.getElementById('arm');
+    if (game.bgCanvas.getContext) {
       //Get Canvas contexts
-      this.bgContext = this.bgCanvas.getContext('2d');
-      this.ballContext = this.ballCanvas.getContext('2d');
-      this.playerContext = this.playerCanvas.getContext('2d');
-      this.armContext = this.armCanvas.getContext('2d');
+      game.bgContext = game.bgCanvas.getContext('2d');
+      game.ballContext = game.ballCanvas.getContext('2d');
+      game.playerContext = game.playerCanvas.getContext('2d');
+      game.armContext = game.armCanvas.getContext('2d');
 
       //Setup Ball:
-      Ball.prototype.context = this.ballContext;
-      Ball.prototype.canvasWidth = this.ballCanvas.width;
-      Ball.prototype.canvasHeight = this.ballCanvas.height;
+      Ball.prototype.context = game.ballContext;
+      Ball.prototype.canvasWidth = game.ballCanvas.width;
+      Ball.prototype.canvasHeight = game.ballCanvas.height;
       //Setup Player:
-      Player.prototype.context = this.playerContext;
-      Player.prototype.canvasWidth = this.playerCanvas.width;
-      Player.prototype.canvasHeight = this.playerCanvas.height;
-      Player.prototype.armContext = this.armContext;
-      Player.prototype.armCanvasWidth = this.armCanvas.width;
-      Player.prototype.armCanvasHeight = this.armCanvas.height;
+      Player.prototype.context = game.playerContext;
+      Player.prototype.canvasWidth = game.playerCanvas.width;
+      Player.prototype.canvasHeight = game.playerCanvas.height;
+      Player.prototype.armContext = game.armContext;
+      Player.prototype.armCanvasWidth = game.armCanvas.width;
+      Player.prototype.armCanvasHeight = game.armCanvas.height;
 
-      this.ball = new Ball();
-      this.ball.init(30, 100, 7, 7);
-      this.player = new Player();
-      this.player.init(50, this.playerCanvas.height - imageRepository.player.height, imageRepository.player.width,
+      game.ball = new Ball();
+      game.ball.init(30, 100, 7, 7);
+      game.player = new Player();
+      game.player.init(50, game.playerCanvas.height - imageRepository.player.height, imageRepository.player.width,
           imageRepository.player.height);
+
       return true;
     } else {
       return false;
     }
-  };
+  },
 
-  this.start = function() {
-    this.player.draw();
-    animate();
-  };
+  run: function() {
+    var now,
+    dt       = 0,
+    last     = timestamp(),
+    slow     = 1, // slow motion scaling factor
+    step     = 1/game.fps, 
+    slowStep = slow * step,
+    fpsmeter = new FPSMeter(document.getElementById('fpsdiv'), { decimals: 0, graph: true, theme: 'dark', left: '5px' });
+
+    function frame() {
+      fpsmeter.tickStart();
+      now = timestamp();
+      dt = dt + Math.min(1, (now - last) / 1000);
+      while(dt > slowStep) {
+        dt = dt - slowStep;
+        game.update(step);
+      }
+      if (KEY_STATUS.space){
+        game.ball.reset();
+      }
+      game.render();
+      last = now;
+      fpsmeter.tick();
+      requestAnimationFrame(frame);
+    };
+
+    requestAnimationFrame(frame);
+  },
+
 }
 
 function drawVect(ctx, v, style) {
@@ -218,16 +274,7 @@ function drawVect(ctx, v, style) {
   ctx.lineTo(v.x, v.y);
   ctx.stroke();
 }
-  
 
-function animate() {
-  requestAnimFrame( animate );
-  game.player.move();
-  game.ball.draw();
-  if (KEY_STATUS.space){
-    game.ball.reset();
-  }
-}
 
 function doesCollide(linestart, lineend, ballpos, radius){
   var coll = true;
@@ -256,92 +303,17 @@ function doesCollide(linestart, lineend, ballpos, radius){
   return coll;
 }
 
-function Vector2(x, y) {
-  this.x = x;
-  this.y = y;
-}
-Vector2.prototype = {
-  add: function(v) {
-    if (v instanceof Vector2){
-      return new Vector2(this.x + v.x, this.y + v.y);
-    } else {
-      return new Vector2(this.x + v, this.y + v);
-    }
-  },
-  subtr: function(v) {
-    if (v instanceof Vector2){
-      return new Vector2(this.x - v.x, this.y - v.y);
-    } else {
-      return new Vector2(this.x - v, this.y - v);
-    }
-  },
-  divide: function(v) {
-    if (v instanceof Vector2) return new Vector(this.x / v.x, this.y / v.y);
-    else return new Vector2(this.x / v, this.y / v);
-  },
-  multiply: function(v) {
-    if (v instanceof Vector2) return new Vector(this.x * v.x, this.y * v.y);
-    else return new Vector2(this.x * v, this.y * v);
-  },
-  unit: function() {
-    return this.divide(this.length());
-  },
-  dot: function(v) {
-    return this.x * v.x + this.y * v.y;
-  },
-  length: function() {
-    return Math.sqrt(this.dot(this));
-  }
-
-}
-
-
-window.requestAnimFrame = (function(){
-  console.log((new Vector2(5,5)).unit());
-  return  window.requestAnimationFrame   ||
-  window.webkitRequestAnimationFrame ||
-  window.mozRequestAnimationFrame    ||
-  window.oRequestAnimationFrame      ||
-  window.msRequestAnimationFrame     ||
-  function(/* function */ callback, /* DOMElement */ element){
-    window.setTimeout(callback, 1000 / 60);
-  };
-})();
-
-var game = new Game();
-
 function init() {
   if (game.init()){
-    game.start();
+    game.run();
   }
 }
 
 
-KEY_CODES = {
-  37: 'left',
-  39: 'right',
-  65: 'rleft',
-  68: 'rright',
-  32: 'space',
+function debug(text){
+  document.getElementById("debug").textContent = text;
 }
 
-KEY_STATUS = {};
-for (code in KEY_CODES) {
-  KEY_STATUS[ KEY_CODES[ code] ] = false;
-}
-
-document.onkeydown = function(e) {
-  var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
-  if (KEY_CODES[keyCode]) {
-    e.preventDefault();
-    KEY_STATUS[KEY_CODES[keyCode]] = true;
-  }
-}
-
-document.onkeyup = function(e) {
-  var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
-  if (KEY_CODES[keyCode]) {
-    e.preventDefault();
-    KEY_STATUS[KEY_CODES[keyCode]] = false;
-  }
+function timestamp() {
+  return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 }
