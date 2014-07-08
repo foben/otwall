@@ -4,6 +4,8 @@ KEY_CODES = {
   65: 'rleft',
   68: 'rright',
   32: 'space',
+  17: 'ctrl',
+  13: 'enter',
 }
 
 KEY_STATUS = {};
