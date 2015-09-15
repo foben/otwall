@@ -101,8 +101,8 @@ function Ball() {
       var newvelangle = newangle.unit().multiply((new Vector2(this.vel.x, this.vel.y)).length());
       this.vel.x = newvelangle.x ;
       this.vel.y = newvelangle.y;
-      this.x = collides.x + newvelangle.x*game.player.rforce*dt;
-      this.y = collides.y + newvelangle.y*game.player.rforce*dt;
+      this.x = collides.x + newvelangle.x*game.player.rforce*dt*5;
+      this.y = collides.y + newvelangle.y*game.player.rforce*dt*5;
 
     }
 
@@ -155,7 +155,7 @@ Ball.prototype = new Drawable();
 
 function Player() {
   this.speed = 5;
-  this.rspeed = 0.2;
+  this.rspeed = 0.15;
   this.rangle = Math.PI/2;
   //this.rangle = -1.4584073464102074;
   this.rangle = 0.9415926535897925;
